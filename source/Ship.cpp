@@ -766,7 +766,22 @@ void Ship::Save(DataWriter &out) const
 	out.Write("ship", modelName);
 	out.BeginChild();
 	{
-		out.Write("name", name);
+		string escapedName;
+		if(name.find_first_of("\"# ", 0) != std::string::npos) {
+			// Need to escape it somehow.
+			 if(name.find('"') == std::string::npos) {
+				// Can just wrap in ""
+				escapedName = '"' + name + '"';
+			}
+			else {
+				// Can just wrap in `` - ` is untypeable in field
+				escapedName = '`' + name + '`';
+			}
+		} else {
+			// Don't need to escape it
+			escapedName = name;
+		}
+		out.Write("name", escapedName);
 		if(pluralModelName != modelName + 's')
 			out.Write("plural", pluralModelName);
 		if(!noun.empty())
