@@ -52,7 +52,9 @@ public:
 	static const Command MAP;
 	static const Command INFO;
 	static const Command FULLSCREEN;
-	static const Command FASTFORWARD;
+	static const Command NORMALSPEED;
+	static const Command SPEEDUP;
+	static const Command SLOWDOWN;
 	// Escort commands:
 	static const Command FIGHT;
 	static const Command GATHER;

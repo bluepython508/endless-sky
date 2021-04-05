@@ -15,12 +15,14 @@ PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 #include "Audio.h"
 #include "Command.h"
 #include "Conversation.h"
+#include "Color.h"
 #include "ConversationPanel.h"
 #include "DataFile.h"
 #include "DataNode.h"
 #include "Dialog.h"
 #include "Files.h"
 #include "text/Font.h"
+#include "text/FontSet.h"
 #include "FrameTimer.h"
 #include "GameData.h"
 #include "GameWindow.h"
@@ -178,7 +180,7 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 	int frameRate = 60;
 	FrameTimer timer(frameRate);
 	bool isPaused = false;
-	bool isFastForward = false;
+	int fastForwardSpeed = 1;
 	
 	// If fast forwarding, keep track of whether the current frame should be drawn.
 	int skipFrame = 0;
@@ -208,7 +210,7 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 			if(event.type == SDL_MOUSEMOTION)
 				cursorTime = 0;
 			
-			if(debugMode && event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_BACKQUOTE)
+			if(event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_BACKQUOTE)
 			{
 				isPaused = !isPaused;
 			}
@@ -242,9 +244,30 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 				GameWindow::ToggleFullscreen();
 			}
 			else if(event.type == SDL_KEYDOWN && !event.key.repeat
-					&& (Command(event.key.keysym.sym).Has(Command::FASTFORWARD)))
+					&& (Command(event.key.keysym.sym).Has(Command::NORMALSPEED)))
 			{
-				isFastForward = !isFastForward;
+				fastForwardSpeed = 1;
+			}
+			else if(event.type == SDL_KEYDOWN && !event.key.repeat && Command(event.key.keysym.sym).Has(Command::SPEEDUP))
+			{
+				if(fastForwardSpeed < 32 && fastForwardSpeed > 0) 
+				{
+					fastForwardSpeed *= 2;
+				}
+				else if(fastForwardSpeed == -1) 
+				{
+					fastForwardSpeed = 1;
+				}
+			}
+			else if(event.type == SDL_KEYDOWN && !event.key.repeat && Command(event.key.keysym.sym).Has(Command::SLOWDOWN))
+			{
+				if(fastForwardSpeed > 1)
+				{
+					fastForwardSpeed /= 2;
+				}
+				else if(fastForwardSpeed == 1) {
+					fastForwardSpeed = -1;
+				}
 			}
 		}
 		SDL_Keymod mod = SDL_GetModState();
@@ -265,8 +288,8 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 		// (for example when the boarding dialog shows up or when the player lands). The player
 		// can switch fast-forward on again when flight is resumed.
 		bool allowFastForward = !gamePanels.IsEmpty() && gamePanels.Top()->AllowFastForward();
-		if(Preferences::Has("Interrupt fast-forward") && !inFlight && isFastForward && !allowFastForward)
-			isFastForward = false;
+		if(Preferences::Has("Interrupt fast-forward") && !inFlight && fastForwardSpeed != 1 && !allowFastForward)
+			fastForwardSpeed = 1;
 		
 		// Tell all the panels to step forward, then draw them.
 		((!isPaused && menuPanels.IsEmpty()) ? gamePanels : menuPanels).StepAll();
@@ -277,7 +300,7 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 		
 		// Caps lock slows the frame rate in debug mode.
 		// Slowing eases in and out over a couple of frames.
-		if((mod & KMOD_CAPS) && inFlight && debugMode)
+		if(inFlight && fastForwardSpeed == -1)
 		{
 			if(frameRate > 10)
 			{
@@ -293,9 +316,9 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 				timer.SetFrameRate(frameRate);
 			}
 			
-			if(isFastForward && inFlight)
+			if(fastForwardSpeed > 1 && inFlight)
 			{
-				skipFrame = (skipFrame + 1) % 3;
+				skipFrame = (skipFrame + 1) % fastForwardSpeed;
 				if(skipFrame)
 					continue;
 			}
@@ -306,8 +329,15 @@ void GameLoop(PlayerInfo &player, const Conversation &conversation, const string
 		// Events in this frame may have cleared out the menu, in which case
 		// we should draw the game panels instead:
 		(menuPanels.IsEmpty() ? gamePanels : menuPanels).DrawAll();
-		if(isFastForward)
+		if(fastForwardSpeed != 1 && !isPaused) {
 			SpriteShader::Draw(SpriteSet::Get("ui/fast forward"), Screen::TopLeft() + Point(10., 10.));
+			const Font &font = FontSet::Get(14);
+			font.Draw("x" + to_string(fastForwardSpeed), Screen::TopLeft() + Point(10., 20.), *GameData::Colors().Get("bright"));
+		}
+		else if(isPaused) {
+			const Font &font = FontSet::Get(14);
+			font.Draw("Paused", Screen::TopLeft() + Point(10., 10.), *GameData::Colors().Get("bright"));
+		}
 		
 		GameWindow::Step();
 		
