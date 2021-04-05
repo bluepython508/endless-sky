@@ -71,6 +71,7 @@ const Command Command::STOP(1ul << 27, "");
 const Command Command::SHIFT(1uL << 28, "");
 const Command Command::SPEEDUP(1uL << 29, "Speed up");
 const Command Command::SLOWDOWN(1uL << 30, "Slow Down");
+const Command Command::DESTROY(1uL <<31, "Fleet: Toggle destroy");
 
 
 
@@ -252,7 +253,8 @@ void Command::Load(const DataNode &node)
 			{"fight", Command::FIGHT},
 			{"gather", Command::GATHER},
 			{"hold", Command::HOLD},
-			{"ammo", Command::AMMO}
+			{"ammo", Command::AMMO},
+			{"destroy", Command::DESTROY}
 		};
 		
 		auto it = lookup.find(node.Token(i));

@@ -337,6 +337,7 @@ void AI::UpdateKeys(PlayerInfo &player, Command &activeCommands)
 {
 	escortsUseAmmo = Preferences::Has("Escorts expend ammo");
 	escortsAreFrugal = Preferences::Has("Escorts use ammo frugally");
+	escortsDestroy = Preferences::Has("Escorts destroy ships");
 	
 	autoPilot |= activeCommands;
 	if(activeCommands.Has(AutopilotCancelCommands()))
@@ -619,7 +620,7 @@ void AI::Step(const PlayerInfo &player, Command &activeCommands)
 			// focus on damaging one particular ship.
 			targetTurn = (targetTurn + 1) & 31;
 			if(targetTurn == step || !target || target->IsDestroyed() || (target->IsDisabled()
-					&& personality.Disables()) || !target->IsTargetable())
+					&& (personality.Disables() && !(it->IsYours() && escortsDestroy))) || !target->IsTargetable())
 				it->SetTargetShip(FindTarget(*it));
 		}
 		if(isPresent)
@@ -1120,7 +1121,7 @@ shared_ptr<Ship> AI::FindTarget(const Ship &ship) const
 			&& ship.Position().Distance(oldTarget->Position()) > 1000.)
 		oldTarget.reset();
 	// Ships with 'plunders' personality always destroy the ships they have boarded.
-	if(oldTarget && person.Plunders() && !person.Disables() 
+	if(oldTarget && person.Plunders() && !(person.Disables() && !(isYours && escortsDestroy))
 			&& oldTarget->IsDisabled() && Has(ship, oldTarget, ShipEvent::BOARD))
 		return oldTarget;
 	shared_ptr<Ship> parentTarget;
@@ -1176,7 +1177,7 @@ shared_ptr<Ship> AI::FindTarget(const Ship &ship) const
 		}
 		
 		// Ships which only disable never target already-disabled ships.
-		if((person.Disables() || (!person.IsNemesis() && foe != oldTarget))
+		if(((person.Disables() && !(isYours && escortsDestroy)) || (!person.IsNemesis() && foe != oldTarget))
 				&& foe->IsDisabled() && !canPlunder)
 			continue;
 		
@@ -2883,7 +2884,7 @@ void AI::AutoFire(const Ship &ship, Command &command, bool secondary) const
 	
 	// Only fire on disabled targets if you don't want to plunder them.
 	bool plunders = (person.Plunders() && ship.Cargo().Free());
-	bool disables = person.Disables();
+	bool disables = (person.Disables() && !(ship.IsYours() && escortsDestroy));
 	
 	// Don't use weapons with firing force if you are preparing to jump.
 	bool isWaitingToJump = ship.Commands().Has(Command::JUMP | Command::WAIT);

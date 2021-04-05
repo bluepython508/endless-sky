@@ -193,6 +193,7 @@ private:
 	
 	bool escortsAreFrugal = true;
 	bool escortsUseAmmo = true;
+	bool escortsDestroy = false;
 	
 	// Current orders for the player's ships. Because this map only applies to
 	// player ships, which are never deleted except when landed, it can use

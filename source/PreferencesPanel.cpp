@@ -57,6 +57,7 @@ namespace {
 	const string SCROLL_SPEED = "Scroll speed";
 	const string FIGHTER_REPAIR = "Repair fighters in";
 	const string SHIP_OUTLINES = "Ship outlines in shops";
+	const string ESCORTS_DESTROY = "Escorts destroy ships";
 }
 
 
@@ -347,7 +348,8 @@ void PreferencesPanel::DrawControls()
 		Command::FIGHT,
 		Command::GATHER,
 		Command::HOLD,
-		Command::AMMO
+		Command::AMMO,
+		Command::DESTROY
 	};
 	static const Command *BREAK = &COMMANDS[19];
 	for(const Command &command : COMMANDS)
@@ -445,6 +447,7 @@ void PreferencesPanel::DrawSettings()
 		"Automatic aiming",
 		"Automatic firing",
 		EXPEND_AMMO,
+		ESCORTS_DESTROY,
 		FIGHTER_REPAIR,
 		TURRET_TRACKING,
 		"\n",

@@ -214,6 +214,16 @@ bool MainPanel::KeyDown(SDL_Keycode key, Uint16 mod, const Command &command, boo
 		Preferences::ToggleAmmoUsage();
 		Messages::Add("Your escorts will now expend ammo: " + Preferences::AmmoUsage() + ".");
 	}
+	else if(command.Has(Command::DESTROY)) {
+		Preferences::Set("Escorts destroy ships", !Preferences::Has("Escorts destroy ships"));
+		if(Preferences::Has("Escorts destroy ships"))\
+		{
+			Messages::Add("Your escorts will now destroy ships");
+		}
+		else {
+			Messages::Add("Your escorts will now disable ships");
+		}
+	}
 	else if((key == SDLK_MINUS || key == SDLK_KP_MINUS) && !command)
 		Preferences::ZoomViewOut();
 	else if((key == SDLK_PLUS || key == SDLK_KP_PLUS || key == SDLK_EQUALS) && !command)
